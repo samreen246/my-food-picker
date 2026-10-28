@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f16a55" />
+    <title>My Food Picker</title>
+    <style>
+      :root {
+        --ink: #35252a;
+        --muted: #826f74;
+        --accent: #ef6a55;
+        --soft: #fff1e8;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        padding: 20px;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(135deg, #fff0dc, #ffe0e8);
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        color: var(--ink);
+      }
+      .app {
+        width: min(100%, 430px);
+        background: #fffdfb;
+        border-radius: 28px;
+        padding: 25px 21px;
+        box-shadow: 0 18px 50px #79354120;
+      }
+      header {
+        text-align: center;
+      }
+      .hero {
+        font-size: 44px;
+      }
+      h1 {
+        margin: 4px 0 5px;
+        font-size: 28px;
+      }
+      p {
+        color: var(--muted);
+        margin: 0 0 20px;
+        font-size: 14px;
+      }
+      #foodList {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 15px 0 20px;
+      }
+      .chip {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        background: var(--soft);
+        border: 1px solid #f6d9cd;
+        border-radius: 999px;
+        padding: 8px 10px;
+        font-weight: 700;
+        font-size: 14px;
+      }
+      .remove {
+        border: 0;
+        background: #f6d7cf;
+        color: #84463e;
+        border-radius: 50%;
+        width: 22px;
+        height: 22px;
+        font-size: 15px;
+        line-height: 1;
+        cursor: pointer;
+      }
+      .addrow {
+        display: flex;
+        gap: 8px;
+        margin: 10px 0 18px;
+      }
+      input {
+        min-width: 0;
+        flex: 1;
+        border: 1.5px solid #ead9d5;
+        border-radius: 13px;
+        padding: 12px;
+        font-size: 15px;
+        outline-color: var(--accent);
+      }
+      button {
+        cursor: pointer;
+        font: inherit;
+      }
+      .addbtn {
+        border: 0;
+        border-radius: 13px;
+        background: #3f7966;
+        color: white;
+        font-weight: 800;
+        padding: 0 15px;
+      }
+      .pick {
+        width: 100%;
+        border: 0;
+        border-radius: 16px;
+        padding: 15px;
+        background: var(--accent);
+        color: white;
+        font-weight: 900;
+        font-size: 17px;
+        box-shadow: 0 5px 0 #c94e3c;
+      }
+      .pick:active {
+        transform: translateY(2px);
+        box-shadow: 0 3px 0 #c94e3c;
+      }
+      .result {
+        margin-top: 20px;
+        background: #fff7d9;
+        border-radius: 19px;
+        padding: 20px 12px;
+        text-align: center;
+        min-height: 120px;
+        display: grid;
+        align-content: center;
+      }
+      #resultEmoji {
+        font-size: 38px;
+      }
+      #resultName {
+        font-size: 25px;
+        font-weight: 900;
+        margin-top: 3px;
+      }
+      #hint {
+        font-size: 13px;
+        color: #92734d;
+        margin-top: 4px;
+      }
+      .note {
+        text-align: center;
+        font-size: 11px;
+        color: #ad999c;
+        margin: 16px 0 0;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <header>
+        <div class="hero">🤔🍴</div>
+        <h1>My Food Picker</h1>
+        <p>Add your options, then let luck decide! ✨</p>
+      </header>
+      <strong>My food options</strong>
+      <div id="foodList" aria-live="polite"></div>
+      <form class="addrow" id="addForm">
+        <input
+          id="newFood"
+          maxlength="40"
+          placeholder="Add an item (e.g. Pizza)"
+          aria-label="New food item"
+          required
+        />
+        <button class="addbtn" type="submit">+ Add</button>
+      </form>
+      <button class="pick" id="pickBtn">🎲 Pick Randomly!</button>
+      <section class="result" aria-live="polite">
+        <div id="resultEmoji">👇</div>
+        <div id="resultName">What will you eat?</div>
+        <div id="hint">Tap the button to find out 😋</div>
+      </section>
+      <p class="note">Your list is saved in this browser on this device 💗</p>
+    </main>
+    <script>
+      const defaults = ["Chowmein", "Momos", "Fries"];
+      let foods;
+      try {
+        foods =
+          JSON.parse(localStorage.getItem("myFoodPickerItems")) ||
+          defaults.slice();
+      } catch (e) {
+        foods = defaults.slice();
+      }
+      if (!Array.isArray(foods) || foods.length === 0) foods = defaults.slice();
+      let previous = "";
+      const emojiFor = (name) => {
+        const s = name.toLowerCase();
+        if (s.includes("momo") || s.includes("dumpling")) return "🥟";
+        if (s.includes("chow") || s.includes("noodle") || s.includes("pasta"))
+          return "🍜";
+        if (s.includes("fries") || s.includes("potato")) return "🍟";
+        if (s.includes("pizza")) return "🍕";
+        if (s.includes("burger")) return "🍔";
+        if (s.includes("sandwich")) return "🥪";
+        if (s.includes("cake") || s.includes("sweet") || s.includes("dessert"))
+          return "🍰";
+        if (s.includes("ice cream") || s.includes("icecream")) return "🍦";
+        if (s.includes("biryani") || s.includes("rice")) return "🍛";
+        if (s.includes("tea") || s.includes("chai")) return "☕";
+        if (s.includes("coffee")) return "🧋";
+        if (s.includes("taco")) return "🌮";
+        return "🍽️";
+      };
+      function save() {
+        try {
+          localStorage.setItem("myFoodPickerItems", JSON.stringify(foods));
+        } catch (e) {}
+      }
+      function render() {
+        const list = document.getElementById("foodList");
+        list.replaceChildren();
+        foods.forEach((food, i) => {
+          const chip = document.createElement("div");
+          chip.className = "chip";
+          const label = document.createElement("span");
+          label.textContent = emojiFor(food) + " " + food;
+          const remove = document.createElement("button");
+          remove.className = "remove";
+          remove.type = "button";
+          remove.textContent = "×";
+          remove.setAttribute("aria-label", "Remove " + food);
+          remove.addEventListener("click", () => {
+            foods.splice(i, 1);
+            save();
+            render();
+            if (!foods.length) {
+              document.getElementById("resultEmoji").textContent = "📝";
+              document.getElementById("resultName").textContent =
+                "Add some food options";
+              document.getElementById("hint").textContent =
+                "You need at least one item to pick.";
+            }
+          });
+          chip.append(label, remove);
+          list.append(chip);
+        });
+      }
+      document.getElementById("addForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const input = document.getElementById("newFood");
+        const value = input.value.trim();
+        if (!value) return;
+        if (foods.some((f) => f.toLowerCase() === value.toLowerCase())) {
+          input.value = "";
+          input.placeholder = "Already in your list!";
+          return;
+        }
+        foods.push(value);
+        save();
+        render();
+        input.value = "";
+        input.placeholder = "Add another item...";
+      });
+      document.getElementById("pickBtn").addEventListener("click", () => {
+        if (!foods.length) {
+          document.getElementById("resultEmoji").textContent = "📝";
+          document.getElementById("resultName").textContent =
+            "Add some food options";
+          document.getElementById("hint").textContent =
+            "Use the box above to add food.";
+          return;
+        }
+        let choice = foods[Math.floor(Math.random() * foods.length)];
+        if (foods.length > 1) {
+          let tries = 0;
+          while (choice === previous && tries < 10) {
+            choice = foods[Math.floor(Math.random() * foods.length)];
+            tries++;
+          }
+        }
+        previous = choice;
+        document.getElementById("resultEmoji").textContent = emojiFor(choice);
+        document.getElementById("resultName").textContent = choice + "!";
+        document.getElementById("hint").textContent =
+          "Decision made. Enjoy! 😋";
+      });
+      render();
+    </script>
+  </body>
+</html>
